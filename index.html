@@ -2,12 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-
-  <meta name="viewport"
-        content="width=device-width, height=device-height,
-                 initial-scale=1, viewport-fit=cover" />
-
-  <title>PDF</title>
+  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,viewport-fit=cover" />
+  <title>Chart</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -18,22 +14,155 @@
       padding: 0;
       width: 100vw;
       height: 100vh;
-      background: #000;
+      background: #111;
       overflow: hidden;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
     }
-    iframe {
+
+    #wrap {
       position: fixed;
       inset: 0;
-      width: 100vw;
-      height: 100vh;
-      border: 0;
-      background: #000;
+      display: grid;
+      place-items: center;
     }
+
+    canvas {
+      max-width: 100vw;
+      max-height: 100vh;
+      width: auto;
+      height: auto;
+      display: block;
+      background: #111;
+    }
+
+    /* Simple controls (optional but useful) */
+    #bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #fff;
+      font-family: -apple-system, system-ui, Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.10);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    #status { opacity: 0.85; }
   </style>
 </head>
-
 <body>
-  <!-- Force initial zoom to fit page width -->
-  <iframe src="doc.pdf#page=1&zoom=page-width"></iframe>
+  <div id="wrap">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div id="bar">
+    <button id="fit">Fit</button>
+    <button id="minus">-</button>
+    <div id="status">Loading…</div>
+    <button id="plus">+</button>
+  </div>
+
+  <!-- PDF.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.js"></script>
+  <script>
+    const url = "doc.pdf";        // your PDF filename
+    const pageNumber = 1;         // first page
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d", { alpha: false });
+
+    const statusEl = document.getElementById("status");
+    const fitBtn = document.getElementById("fit");
+    const minusBtn = document.getElementById("minus");
+    const plusBtn = document.getElementById("plus");
+
+    let pdfDoc = null;
+    let page = null;
+    let baseFitScale = 1;
+    let userScaleMult = 1;
+
+    // Required for pdf.js worker on CDN
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.js";
+
+    function viewportFitScale(pdfPage) {
+      const unscaled = pdfPage.getViewport({ scale: 1 });
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const sx = vw / unscaled.width;
+      const sy = vh / unscaled.height;
+      return Math.min(sx, sy); // FIT WHOLE PAGE (not just width)
+    }
+
+    async function render() {
+      if (!page) return;
+
+      baseFitScale = viewportFitScale(page);
+      const scale = baseFitScale * userScaleMult;
+
+      const vp = page.getViewport({ scale });
+
+      // Size the actual bitmap
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(vp.width * dpr);
+      canvas.height = Math.floor(vp.height * dpr);
+
+      // Size the displayed canvas (keeps it centered)
+      canvas.style.width = Math.floor(vp.width) + "px";
+      canvas.style.height = Math.floor(vp.height) + "px";
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+
+      statusEl.textContent = `Page ${pageNumber} • ${Math.round(scale * 100)}%`;
+
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    }
+
+    async function init() {
+      statusEl.textContent = "Loading…";
+      pdfDoc = await pdfjsLib.getDocument(url).promise;
+      page = await pdfDoc.getPage(pageNumber);
+      userScaleMult = 1;
+      await render();
+    }
+
+    fitBtn.addEventListener("click", async () => {
+      userScaleMult = 1;
+      await render();
+    });
+
+    minusBtn.addEventListener("click", async () => {
+      userScaleMult = Math.max(0.25, userScaleMult / 1.15);
+      await render();
+    });
+
+    plusBtn.addEventListener("click", async () => {
+      userScaleMult = Math.min(6, userScaleMult * 1.15);
+      await render();
+    });
+
+    window.addEventListener("resize", () => { render(); });
+
+    init();
+  </script>
 </body>
 </html>
