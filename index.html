@@ -3,15 +3,12 @@
 <head>
   <meta charset="utf-8" />
 
-  <!-- Correct viewport for iPhone + iPad -->
   <meta name="viewport"
         content="width=device-width, height=device-height,
-                 initial-scale=1, maximum-scale=1,
-                 viewport-fit=cover" />
+                 initial-scale=1, viewport-fit=cover" />
 
   <title>PDF</title>
 
-  <!-- iOS standalone app -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
@@ -24,19 +21,19 @@
       background: #000;
       overflow: hidden;
     }
-
     iframe {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100vw;
       height: 100vh;
       border: 0;
+      background: #000;
     }
   </style>
 </head>
 
 <body>
-  <iframe src="doc.pdf"></iframe>
+  <!-- Force initial zoom to fit page width -->
+  <iframe src="doc.pdf#page=1&zoom=page-width"></iframe>
 </body>
 </html>
