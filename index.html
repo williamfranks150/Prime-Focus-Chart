@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport"
-        content="width=device-width,height=device-height,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,viewport-fit=cover" />
   <title>Focus Chart</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -23,47 +22,27 @@
       position: fixed;
       inset: 0;
       background: #000;
-      overflow: hidden; /* portrait default */
+      overflow: hidden;
     }
 
-    /* Centering wrapper (works in both modes) */
-    #center {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;     /* vertical center */
-      justify-content: center; /* horizontal center */
-    }
-
-    /* Image defaults (portrait behavior: fit whole chart) */
+    /* Single image element, always centered */
     #chart {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 100vw;
+      height: 100vh;
+      object-position: center center;
+      object-fit: contain; /* portrait default */
       display: block;
+      background: #000;
     }
 
-    /* LANDSCAPE behavior:
-       - allow panning
-       - show at 100% (natural pixels)
-       - keep centered initially */
+    /* Landscape: fill the screen corner-to-corner */
     @media (orientation: landscape) {
-      #stage {
-        overflow: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      #center {
-        min-width: 100%;
-        min-height: 100%;
-      }
-
       #chart {
-        max-width: none;
-        max-height: none;
-        width: auto;
-        height: auto;
+        object-fit: cover; /* fills screen, crops edges */
       }
     }
   </style>
@@ -71,33 +50,7 @@
 
 <body>
   <div id="stage">
-    <div id="center">
-      <img id="chart" src="chart.png" alt="Focus Chart">
-    </div>
+    <img id="chart" src="chart.png" alt="Focus Chart">
   </div>
-
-  <script>
-    // When entering landscape, scroll so the image stays centered in the viewport.
-    function centerScroll() {
-      const stage = document.getElementById('stage');
-      const img = document.getElementById('chart');
-
-      // Only do this when stage is scrollable (landscape)
-      const landscape = window.matchMedia("(orientation: landscape)").matches;
-      if (!landscape) return;
-
-      // Wait for layout to settle
-      requestAnimationFrame(() => {
-        const x = Math.max(0, (img.offsetWidth  - stage.clientWidth)  / 2);
-        const y = Math.max(0, (img.offsetHeight - stage.clientHeight) / 2);
-        stage.scrollLeft = x;
-        stage.scrollTop  = y;
-      });
-    }
-
-    window.addEventListener('load', centerScroll);
-    window.addEventListener('orientationchange', () => setTimeout(centerScroll, 50));
-    window.addEventListener('resize', () => setTimeout(centerScroll, 50));
-  </script>
 </body>
 </html>
