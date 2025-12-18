@@ -9,43 +9,47 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <style>
+    :root {
+      --vw: 100vw;
+      --vh: 100vh;
+      --sal: env(safe-area-inset-left);
+      --sar: env(safe-area-inset-right);
+      --sat: env(safe-area-inset-top);
+      --sab: env(safe-area-inset-bottom);
+    }
+
     html, body {
       margin: 0;
       padding: 0;
+      background: #000;
+      overflow: hidden;
       width: 100%;
       height: 100%;
-      background: #000;
-      overflow: hidden;
     }
 
-    /* Fixed full-screen stage */
+    /* Overscan stage into safe areas (kills “pillars” in landscape) */
     #stage {
       position: fixed;
-      inset: 0;
+      top: calc(-1 * var(--sat));
+      left: calc(-1 * var(--sal));
+      width: calc(var(--vw) + var(--sal) + var(--sar));
+      height: calc(var(--vh) + var(--sat) + var(--sab));
       background: #000;
       overflow: hidden;
     }
 
-    /* Absolute-centered image */
     #chart {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 100vw;
-      height: 100vh;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       object-position: 50% 50%;
       object-fit: contain; /* portrait default */
       display: block;
     }
 
-    /* Landscape: FORCE fill (no pillars). This will crop top/bottom if needed. */
     @media (orientation: landscape) {
-      #chart {
-        object-fit: cover;
-        width: 100vw;
-        height: 100vh;
-      }
+      #chart { object-fit: cover; } /* landscape fills edge-to-edge (cropped) */
     }
   </style>
 </head>
@@ -54,5 +58,20 @@
   <div id="stage">
     <img id="chart" src="chart.png" alt="Focus Chart">
   </div>
+
+  <script>
+    // Use the *visual* viewport to avoid iOS toolbar/addressbar weirdness.
+    function setVV() {
+      const vv = window.visualViewport;
+      const w = (vv && vv.width) ? vv.width : window.innerWidth;
+      const h = (vv && vv.height) ? vv.height : window.innerHeight;
+      document.documentElement.style.setProperty('--vw', w + 'px');
+      document.documentElement.style.setProperty('--vh', h + 'px');
+    }
+    window.addEventListener('load', setVV);
+    window.addEventListener('resize', setVV);
+    window.addEventListener('orientationchange', () => setTimeout(setVV, 50));
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', setVV);
+  </script>
 </body>
 </html>
