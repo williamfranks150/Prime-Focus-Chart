@@ -15,9 +15,10 @@
       width: 100%;
       height: 100%;
       background: #000;
+      overflow: hidden;
     }
 
-    /* Full-screen stage */
+    /* Fixed full-screen stage */
     #stage {
       position: fixed;
       inset: 0;
@@ -25,7 +26,7 @@
       overflow: hidden;
     }
 
-    /* Single image element, always centered */
+    /* Absolute-centered image */
     #chart {
       position: absolute;
       left: 50%;
@@ -33,16 +34,17 @@
       transform: translate(-50%, -50%);
       width: 100vw;
       height: 100vh;
-      object-position: center center;
+      object-position: 50% 50%;
       object-fit: contain; /* portrait default */
       display: block;
-      background: #000;
     }
 
-    /* Landscape: fill the screen corner-to-corner */
+    /* Landscape: FORCE fill (no pillars). This will crop top/bottom if needed. */
     @media (orientation: landscape) {
       #chart {
-        object-fit: cover; /* fills screen, crops edges */
+        object-fit: cover;
+        width: 100vw;
+        height: 100vh;
       }
     }
   </style>
