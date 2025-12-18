@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <title>Focus Chart</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <style>
-    :root {
+    :root{
       --vw: 100vw;
       --vh: 100vh;
       --sal: env(safe-area-inset-left);
@@ -25,9 +25,15 @@
       overflow: hidden;
       width: 100%;
       height: 100%;
+
+      /* block scroll/pan */
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
     }
 
-    /* Overscan stage into safe areas (kills “pillars” in landscape) */
+    /* overscan into safe areas */
     #stage {
       position: fixed;
       top: calc(-1 * var(--sat));
@@ -44,12 +50,17 @@
       width: 100%;
       height: 100%;
       object-position: 50% 50%;
-      object-fit: contain; /* portrait default */
+      object-fit: contain; /* portrait: whole chart visible */
       display: block;
+
+      /* block image dragging/selection */
+      pointer-events: none;
+      -webkit-user-drag: none;
+      user-drag: none;
     }
 
     @media (orientation: landscape) {
-      #chart { object-fit: cover; } /* landscape fills edge-to-edge (cropped) */
+      #chart { object-fit: cover; } /* landscape: edge-to-edge, cropped */
     }
   </style>
 </head>
@@ -60,7 +71,7 @@
   </div>
 
   <script>
-    // Use the *visual* viewport to avoid iOS toolbar/addressbar weirdness.
+    // keep viewport sizing stable across iOS toolbar/addressbar changes
     function setVV() {
       const vv = window.visualViewport;
       const w = (vv && vv.width) ? vv.width : window.innerWidth;
@@ -72,6 +83,19 @@
     window.addEventListener('resize', setVV);
     window.addEventListener('orientationchange', () => setTimeout(setVV, 50));
     if (window.visualViewport) window.visualViewport.addEventListener('resize', setVV);
+
+    // hard-disable pinch-zoom gesture on iOS Safari
+    document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+    document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
+    document.addEventListener('gestureend', e => e.preventDefault(), { passive: false });
+
+    // also block double-tap zoom
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
   </script>
 </body>
 </html>
